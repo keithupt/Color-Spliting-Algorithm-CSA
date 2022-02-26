@@ -103,7 +103,7 @@ public class CSA {
     }
 
     public static void printMenu() {
-        String[] menu = {"/n" + "********* MENU *********",
+        String[] menu = {"\n" + "********* MENU *********",
                 "A. * Automatic Balanced Ancestral Coloring *",
                 "B. * Manual Feasible Color Configuration *",
                 "Q. * Quit *"};
