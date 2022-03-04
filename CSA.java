@@ -133,8 +133,8 @@ public class CSA {
             System.out.print("Enter the height of a tree \"h\" = ");
             // The height "h" input have to an integer number
             while (!input.hasNextInt()) {
-                System.out.println("NOTE! You have to put integer of the height \"h\"");
-                input.next(); // this is important!
+                System.out.print("NOTE! You have to put integer of the height \"h\" = ");
+                input.next();
             }
             height = input.nextInt();
             if (height < 2) {
