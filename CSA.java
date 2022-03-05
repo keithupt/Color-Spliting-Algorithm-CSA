@@ -30,6 +30,7 @@ public class CSA {
         String vc;
 
         while (true) {
+            System.out.print("Removing all the garbage collector .....");
             System.gc(); //runs the garbage collector
             Scanner input = new Scanner(System.in);
 
@@ -169,8 +170,6 @@ class ColorSplittingAlgorithm {
     PerfectBinaryTree T;
     ArrayList<String> sc = new ArrayList<>();
     LinkedHashMap<String, Integer> sorted = new LinkedHashMap<>();
-    Map<String, Integer> sortedMap = new LinkedHashMap<>();
-    List<Color> colorList = new ArrayList<>();
     HashMap<HashMap<String, Integer>, HashMap<String, Integer>> C = new HashMap<>();
 
     //Given a feasible configuration 𝑐 = [𝑐1, . . . , 𝑐ℎ], the algorithm finds a 𝑐-coloring of 𝑇 (ℎ)
@@ -394,16 +393,12 @@ class ColorSplittingAlgorithm {
     }
 
     //Sorts 𝑐𝑖 in a non-decreasing order
-    public HashMap<String, Integer> intSorted(HashMap<String, Integer> c){
-        colorList.clear();
-        c.forEach((color, size) -> colorList.add(new Color(color, size)));
-
-        Collections.sort(colorList);
-
-        sortedMap.clear();
-        colorList.forEach(color -> sortedMap.put(color.getColor(), color.getSize()));
-
-        return (HashMap<String, Integer>) sortedMap;
+    public HashMap<String, Integer> intSorted(HashMap<String, Integer> m) {
+        sorted = m.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue, (e1, e2) -> e1, LinkedHashMap :: new));
+        return sorted;
     }
 }
 
@@ -435,23 +430,5 @@ class PerfectBinaryTree {
 
     public int getHeight() {
         return height;
-    }
-}
-
-class Color implements Comparable<Color> {
-    private String color;
-    private int size;
-
-    public Color(String color, int size){
-        this.color = color;
-        this.size = size;
-    }
-
-    public String getColor(){ return color;}
-    public int getSize(){ return size;}
-
-    @Override
-    public int compareTo(Color otherColor) {
-        return Integer.compare(getSize(), otherColor.getSize());
     }
 }
