@@ -30,6 +30,7 @@ public class CSA {
         String vc;
 
         while (true) {
+            System.gc(); //runs the garbage collector
             Scanner input = new Scanner(System.in);
 
             printMenu();
@@ -96,7 +97,7 @@ public class CSA {
             //Print output
             System.out.println("*** Output:");
             System.out.println("    Execution time in milliseconds: " + timeElapsed);
-            printOutput(T);
+            //printOutput(T);
         }
     }
 
@@ -168,6 +169,8 @@ class ColorSplittingAlgorithm {
     PerfectBinaryTree T;
     ArrayList<String> sc = new ArrayList<>();
     LinkedHashMap<String, Integer> sorted = new LinkedHashMap<>();
+    Map<String, Integer> sortedMap = new LinkedHashMap<>();
+    List<Color> colorList = new ArrayList<>();
     HashMap<HashMap<String, Integer>, HashMap<String, Integer>> C = new HashMap<>();
 
     //Given a feasible configuration 𝑐 = [𝑐1, . . . , 𝑐ℎ], the algorithm finds a 𝑐-coloring of 𝑇 (ℎ)
@@ -183,7 +186,7 @@ class ColorSplittingAlgorithm {
     //𝑐 = [𝑐1, . . . , 𝑐ℎ] is a feasible color configuration, which implies that 2 ≤ 𝑐1 ≤ 𝑐2 ≤ · · · ≤ 𝑐ℎ
     //This procedure colors the two children of 𝑅 and create feasible color configurations for its
     //left and right subtrees
-    public void ColorSplittingRecursive(long R, int h, HashMap<String, Integer> c) {
+    public boolean ColorSplittingRecursive(long R, int h, HashMap<String, Integer> c) {
         long A, B;
         HashMap<String, Integer> a = new HashMap<>(h - 1);
         HashMap<String, Integer> b = new HashMap<>(h - 1);
@@ -224,6 +227,7 @@ class ColorSplittingAlgorithm {
                 sorted.clear();
             }
         }
+        return true;
     }
 
     /* This algorithm splits a ℎ-feasible configuration into two (ℎ − 1)-feasible ones, which will be used for coloring the subtrees;
@@ -390,12 +394,16 @@ class ColorSplittingAlgorithm {
     }
 
     //Sorts 𝑐𝑖 in a non-decreasing order
-    public HashMap<String, Integer> intSorted(HashMap<String, Integer> m) {
-        sorted = m.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue())
-                .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue, (e1, e2) -> e1, LinkedHashMap :: new));
-        return sorted;
+    public HashMap<String, Integer> intSorted(HashMap<String, Integer> c){
+        colorList.clear();
+        c.forEach((color, size) -> colorList.add(new Color(color, size)));
+
+        Collections.sort(colorList);
+
+        sortedMap.clear();
+        colorList.forEach(color -> sortedMap.put(color.getColor(), color.getSize()));
+
+        return (HashMap<String, Integer>) sortedMap;
     }
 }
 
@@ -427,5 +435,23 @@ class PerfectBinaryTree {
 
     public int getHeight() {
         return height;
+    }
+}
+
+class Color implements Comparable<Color> {
+    private String color;
+    private int size;
+
+    public Color(String color, int size){
+        this.color = color;
+        this.size = size;
+    }
+
+    public String getColor(){ return color;}
+    public int getSize(){ return size;}
+
+    @Override
+    public int compareTo(Color otherColor) {
+        return Integer.compare(getSize(), otherColor.getSize());
     }
 }
