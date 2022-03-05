@@ -167,6 +167,7 @@ class ColorSplittingAlgorithm {
 
     PerfectBinaryTree T;
     ArrayList<String> sc = new ArrayList<>();
+    LinkedHashMap<String, Integer> sorted = new LinkedHashMap<>();
     HashMap<HashMap<String, Integer>, HashMap<String, Integer>> C = new HashMap<>();
 
     //Given a feasible configuration 𝑐 = [𝑐1, . . . , 𝑐ℎ], the algorithm finds a 𝑐-coloring of 𝑇 (ℎ)
@@ -216,9 +217,11 @@ class ColorSplittingAlgorithm {
 
                 ColorSplittingRecursive(A, h - 1, intSorted(a));
                 a.clear();
+                sorted.clear();
 
                 ColorSplittingRecursive(B, h - 1, intSorted(b));
                 b.clear();
+                sorted.clear();
             }
         }
     }
@@ -388,10 +391,11 @@ class ColorSplittingAlgorithm {
 
     //Sorts 𝑐𝑖 in a non-decreasing order
     public HashMap<String, Integer> intSorted(HashMap<String, Integer> m) {
-        return m.entrySet()
+        sorted = m.entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByValue())
                 .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue, (e1, e2) -> e1, LinkedHashMap :: new));
+        return sorted;
     }
 }
 
