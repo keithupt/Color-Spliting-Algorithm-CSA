@@ -97,7 +97,7 @@ public class CSA {
             //Print output
             System.out.println("*** Output:");
             System.out.println("    Execution time in milliseconds: " + timeElapsed);
-            //printOutput(T);
+            printOutput(T);
         }
     }
 
