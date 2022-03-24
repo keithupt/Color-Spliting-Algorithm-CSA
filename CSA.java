@@ -1,7 +1,9 @@
 /*
-# PROGRAMMER: QUANG CAO - nhat.quang.cao@student.rmit.edu.au
+# PROGRAMMER: QUANG CAO and SON HOANG DAU - nhat.quang.cao@student.rmit.edu.au
 # DATE CREATED: 22/02/2022
-# REVISED DATE: 08/03/2022
+# REVISED DATE: 24/03/2022
+# ORIGINAL VERSION was made by RINALDO GAGIANO.
+# This is a NEW EFFICIENT VERSION.
 # TITLE: Ancestral Colorings of Perfect Binary Trees With Applications in Private Retrieval of Merkle Proofs
 # AUTHORS: Quang Cao, Rinaldo Gagiano, Duy Huynh, Xun Yi, Son Hoang Dau, Phuc Lu Le, Quang-Hung Luu, Emanuele Viterbo, Yu-Chih Huang, Jingge Zhu, Mohammad M. Jalalzai, and Chen Feng
 # PURPOSE: In this paper, we develop a divide-and-conquer algorithm called Color-Splitting Algorithm (CSA)
@@ -17,22 +19,27 @@
 */
 
 import java.util.*;
-import java.util.stream.*;
 
 public class CSA {
 
     public static void main(String[] args) {
+
         ColorSplittingAlgorithm CSA = new ColorSplittingAlgorithm();
-        PerfectBinaryTree T;
+        BalancedSet[] balancedSets;
+
+        //A color configuration c
+        List<NumColor> c = new ArrayList<>();
+        Scanner input = new Scanner(System.in);
 
         int h = 0; //h is the height of a tree
         String option; //A for Automatic Balanced Ancestral Coloring; B for Manual Feasible Color Configuration
         String vc;
+        char[] color = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'
+                , 'R','S', 'T', 'U', 'V','W', 'X', 'Y', 'Z','0', '1', '2', '3', '4', '5', '6', '7','8', '9'};
 
         while (true) {
             System.out.print("Removing all the garbage collector .....");
             System.gc(); //runs the garbage collector
-            Scanner input = new Scanner(System.in);
 
             printMenu();
 
@@ -47,17 +54,14 @@ public class CSA {
             //Quit
             if (option.charAt(0) == 'Q' || option.charAt(0) == 'q') break;
 
-            //A color configuration c with key = color, value = node ID
-            HashMap<String, Integer> c = new HashMap<>();
-
             //A. * Automatic Balanced Ancestral Coloring *
             if (option.charAt(0) == 'A' || option.charAt(0) == 'a') {
                 h = h(); //Enter the height of a tree "h" from keyboard
                 c = CSA.balancedColorConfiguration(h);
-                c = CSA.intSorted(c);
-
-                //B. * Manual Feasible Color Configuration
-            } else if (option.charAt(0) == 'B' || option.charAt(0) == 'b') {
+                Collections.sort(c);
+            }
+            //B. * Manual Feasible Color Configuration
+            else if (option.charAt(0) == 'B' || option.charAt(0) == 'b') {
                 do {
                     input = new Scanner(System.in);
                     System.out.println("\n" + "|| Following the Definition 2.3 (Feasible Color Configuration)");
@@ -69,36 +73,45 @@ public class CSA {
                     String[] ci = vc.split(" ");
                     h = ci.length;
                     for (int i = 0; i < h; i++) {
-                        c.put("C" + (i + 1), Integer.parseInt(ci[i]));
+                        c.add(new NumColor(color[i], Integer.parseInt(ci[i])));
                     }
-                    c = CSA.intSorted(c);
+                    Collections.sort(c);
                 } while (!CSA.isFeasible(h, c));
 
-                //Invalid input option
-            } else System.out.println("Warning! Invalid input option. The option has to be a letter A, B, or Q");
+            }
+            //Invalid input option
+            else System.out.println("Warning! Invalid input option. The option has to be a letter A, B, or Q");
 
             //The color configuration c = [c1,...,ch]
-            ArrayList<Integer> vectorC = new ArrayList<>(c.values());
+            ArrayList<Integer> vectorC = new ArrayList<>(c.size());
 
-            //Start Color-Splitting Algorithm
+            c.forEach(x -> vectorC.add(x.getSize()));
+
+            //Start Color-Splitting Algorithm ************************** START *************************
             long startTime = System.nanoTime();
 
             //Color-Splitting Algorithm
-            T = CSA.ColorSplitting(h, c);
+            balancedSets = CSA.ColorSplitting(h, c);
 
-            //End Color-Splitting Algorithm
+            //End Color-Splitting Algorithm ***************************** END **************************
             long endTime = System.nanoTime();
             long timeElapsed = (endTime - startTime) / 1000000;
 
-            //Print input including the heigh of a tree and a color configuration c = [c1,...,ch]
+            //Print input including the height of a tree and a color configuration c = [c1,...,ch]
             System.out.println("*** Input:");
-            System.out.println("    Tree heigh: " + T.getHeight());
+            System.out.println("    Tree heigh: " + h);
             System.out.println("    c = " + vectorC);
 
-            //Print output
+            //Print Output
             System.out.println("*** Output:");
             System.out.println("    Execution time in milliseconds: " + timeElapsed);
-            printOutput(T);
+            Arrays.stream(balancedSets).forEach(s -> {
+                System.out.print("    Color " + s.getColorSet() + ": ");
+                Arrays.stream(s.getAddNodes()).forEach(r -> System.out.print(r + " "));
+                System.out.println();
+            });
+
+            c.clear();
         }
     }
 
@@ -110,20 +123,6 @@ public class CSA {
         for (String s : menu) {
             System.out.println(s);
         }
-    }
-
-    //Print all the sets of balanced colors
-    public static void printOutput(PerfectBinaryTree T) {
-        //Group roots R based on their colors.
-        HashMap<Long, String> groupRoots = T.getcoloringNodes();
-        Map<String, List<Long>> groupColoringNodes = groupRoots.keySet().stream().collect(Collectors.groupingBy(groupRoots :: get));
-
-        //Print all the sets of balanced colors
-        groupColoringNodes.forEach((color, r) -> {
-            System.out.print("    * Color " + color + " = ");
-            r.forEach(x -> System.out.print(x + " "));
-            System.out.println();
-        });
     }
 
     //Enter the height of a tree "h" from keyboard. h has to greater than or equal 2.
@@ -167,17 +166,23 @@ public class CSA {
 //Color-Splitting Algorithm
 class ColorSplittingAlgorithm {
 
-    PerfectBinaryTree T;
-    ArrayList<String> sc = new ArrayList<>();
-    LinkedHashMap<String, Integer> sorted = new LinkedHashMap<>();
-    HashMap<HashMap<String, Integer>, HashMap<String, Integer>> C = new HashMap<>();
+    BalancedSet[] balancedSets;
+    HashMap<List<NumColor>, List<NumColor>> C = new HashMap<>();
+    char[] color = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'
+            , 'R','S', 'T', 'U', 'V','W', 'X', 'Y', 'Z','0', '1', '2', '3', '4', '5', '6', '7','8', '9'};
 
     //Given a feasible configuration 𝑐 = [𝑐1, . . . , 𝑐ℎ], the algorithm finds a 𝑐-coloring of 𝑇 (ℎ)
-    public PerfectBinaryTree ColorSplitting(int h, HashMap<String, Integer> c) {
-        long R = 1; //the root of 𝑇 (ℎ) is 1
-        T = new PerfectBinaryTree(h);
+    public BalancedSet[] ColorSplitting(int h, List<NumColor> c) {
+        int R = 1; //the root of 𝑇 (ℎ) is 1
+        balancedSets = new BalancedSet [h];
+        for (int q = 0; q < h; q++){
+            int size = c.get(q).getSize();
+            balancedSets[q] = new BalancedSet(c.get(q).getColor(), size);
+            //System.out.println(balancedSets[q].getColorSet() + " size " + balancedSets[q].getColorSetSize());
+        }
+
         ColorSplittingRecursive(R, h, c);
-        return T;
+        return balancedSets;
     }
 
     //𝑅 is the root node of the current subtree 𝑇 (ℎ) of height ℎ
@@ -185,45 +190,52 @@ class ColorSplittingAlgorithm {
     //𝑐 = [𝑐1, . . . , 𝑐ℎ] is a feasible color configuration, which implies that 2 ≤ 𝑐1 ≤ 𝑐2 ≤ · · · ≤ 𝑐ℎ
     //This procedure colors the two children of 𝑅 and create feasible color configurations for its
     //left and right subtrees
-    public boolean ColorSplittingRecursive(long R, int h, HashMap<String, Integer> c) {
-        long A, B;
-        HashMap<String, Integer> a = new HashMap<>(h - 1);
-        HashMap<String, Integer> b = new HashMap<>(h - 1);
+    public boolean ColorSplittingRecursive(int R, int h, List<NumColor> c) {
+        int A, B;
+        List<NumColor> a = new ArrayList<>(h - 1);
+        List<NumColor> b = new ArrayList<>(h - 1);
 
-        sc.clear();
         C.clear();
-        sc.addAll(c.keySet());
 
         //if (!isFeasible(h, c)) return false;
 
         if (h > 0) {
             A = 2 * R; //left child of 𝑅
             B = 2 * R + 1; //right child of 𝑅
+
             //Assign Color 1 to both 𝐴 and 𝐵;
-            if (c.get(sc.get(0)) == 2) {
-                T.setColorNode(A, sc.get(0));
-                T.setColorNode(B, sc.get(0));
+            if (c.get(0).getSize() == 2) {
+                for (BalancedSet balancedSet : balancedSets) {
+                    if (balancedSet.getColorSet() == c.get(0).getColor()) {
+                        balancedSet.addNode(A);
+                        balancedSet.addNode(B);
+                    }
+                }
             }
             //Assign Color 1 to 𝐴 and Color 2 to 𝐵;
             else {
-                T.setColorNode(A, sc.get(0));
-                T.setColorNode(B, sc.get(1));
+                for (BalancedSet balancedSet : balancedSets) {
+                    if (balancedSet.getColorSet() == c.get(0).getColor()) {
+                        balancedSet.addNode(A);
+                    }
+                    if (balancedSet.getColorSet() == c.get(1).getColor()) {
+                        balancedSet.addNode(B);
+                    }
+                }
             }
 
             if (h > 1) {
                 C = FeasibleSplit(h, c);
                 C.forEach((n, m) -> {
-                    a.putAll(n);
-                    b.putAll(m);
+                    a.addAll(n);
+                    b.addAll(m);
                 });
 
-                ColorSplittingRecursive(A, h - 1, intSorted(a));
-                a.clear();
-                sorted.clear();
+                Collections.sort(a);
+                ColorSplittingRecursive(A, h - 1, a);
 
-                ColorSplittingRecursive(B, h - 1, intSorted(b));
-                b.clear();
-                sorted.clear();
+                Collections.sort(b);
+                ColorSplittingRecursive(B, h - 1, b);
             }
         }
         return true;
@@ -234,56 +246,57 @@ class ColorSplittingAlgorithm {
     if Color 𝑖 is used for a node then it will no longer be used in the subtree rooted at that node,
     hence guaranteeing the Ancestral Property.*/
     // key = a; value = b which are two (ℎ − 1)-feasible of two subtrees following "Procedure FeasibleSplit(ℎ, 𝑐)"
-    public HashMap<HashMap<String, Integer>, HashMap<String, Integer>> FeasibleSplit(int h, HashMap<String, Integer> c) {
-        HashMap<String, Integer> a = new HashMap<>(h - 1);
-        HashMap<String, Integer> b = new HashMap<>(h - 1);
+    public HashMap<List<NumColor>, List<NumColor>> FeasibleSplit(int h, List<NumColor> c) {
+        List<NumColor> a = new ArrayList<>(h - 1);
+        List<NumColor> b = new ArrayList<>(h - 1);
 
-        sc.clear();
         C.clear();
-        sc.addAll(c.keySet());
 
         if (h == 2) {
             int i = 1; //Position 2
             int aValue, bValue;
 
-            if (c.get(sc.get(0)) == 2) {
-                aValue = c.get(sc.get(i)) / 2;
-                bValue = c.get(sc.get(i)) / 2;
-                a.put(sc.get(1), aValue);
-                b.put(sc.get(1), bValue);
+            if (c.get(0).getSize() == 2) {
+                aValue = c.get(i).getSize() / 2;
+                bValue = c.get(i).getSize() / 2;
+                a.add(new NumColor(c.get(1).getColor(), aValue));
+                b.add(new NumColor(c.get(1).getColor(), bValue));
             } else {
-                aValue = c.get(sc.get(i)) - 1;
-                bValue = c.get(sc.get(0)) - 1;
-                a.put(sc.get(1), aValue);
-                b.put(sc.get(0), bValue);
+                aValue = c.get(i).getSize() - 1;
+                bValue = c.get(0).getSize() - 1;
+                a.add(new NumColor(c.get(1).getColor(), aValue));
+                b.add(new NumColor(c.get(0).getColor(), bValue));
             }
 
-            C.put(intSorted(a), intSorted(b));
+            Collections.sort(a);
+            Collections.sort(b);
+
+            C.put(a, b);
 
             return C;
 
         } else if (h > 2) {
             //Case 1: 𝑐1 = 2
-            if (c.get(sc.get(0)) == 2) {
+            if (c.get(0).getSize() == 2) {
                 int i = 1; //Position 2
-                int aValue = (int) Math.floor(c.get(sc.get(i)) / 2.0);
-                int bValue = (int) Math.ceil(c.get(sc.get(i)) / 2.0);
-                a.put(sc.get(i), aValue);
-                b.put(sc.get(i), bValue);
+                int aValue = (int) Math.floor(c.get(i).getSize() / 2.0);
+                int bValue = (int) Math.ceil(c.get(i).getSize() / 2.0);
+                a.add(new NumColor(c.get(i).getColor(), aValue));
+                b.add(new NumColor(c.get(i).getColor(), bValue));
                 int Sa = aValue; //Left sum
                 int Sb = bValue; //Right sum
                 i++;
                 //change for original algorithm
                 while (i < h) {
                     if (Sa < Sb) {
-                        aValue = (int) Math.ceil(c.get(sc.get(i)) / 2.0);
-                        bValue = (int) Math.floor(c.get(sc.get(i)) / 2.0);
+                        aValue = (int) Math.ceil(c.get(i).getSize() / 2.0);
+                        bValue = (int) Math.floor(c.get(i).getSize() / 2.0);
                     } else {
-                        aValue = (int) Math.floor(c.get(sc.get(i)) / 2.0);
-                        bValue = (int) Math.ceil(c.get(sc.get(i)) / 2.0);
+                        aValue = (int) Math.floor(c.get(i).getSize() / 2.0);
+                        bValue = (int) Math.ceil(c.get(i).getSize() / 2.0);
                     }
-                    a.put(sc.get(i), aValue);
-                    b.put(sc.get(i), bValue);
+                    a.add(new NumColor(c.get(i).getColor(), aValue));
+                    b.add(new NumColor(c.get(i).getColor(), bValue));
                     Sa += aValue;
                     Sb += bValue;
                     i++;
@@ -292,39 +305,39 @@ class ColorSplittingAlgorithm {
             //Case 2: 𝑐1 > 2; note that 𝑐1 ≥ 2 due to the feasibility of 𝑐;
             else {
                 int i = 1; //Position 2
-                int aValue = c.get(sc.get(i)) - 1;
-                int bValue = c.get(sc.get(0)) - 1;
-                a.put(sc.get(1), aValue);
-                b.put(sc.get(0), bValue);
+                int aValue = c.get(i).getSize() - 1;
+                int bValue = c.get(0).getSize() - 1;
+                a.add(new NumColor(c.get(1).getColor(), aValue));
+                b.add(new NumColor(c.get(0).getColor(), bValue));
                 int Sa = aValue; //Left sum
                 int Sb = bValue; //Right sum
                 i++;
-                aValue = (int) Math.ceil((c.get(sc.get(i)) + c.get(sc.get(0)) - c.get(sc.get(i - 1))) / 2.0);
-                bValue = c.get(sc.get(i - 1)) - c.get(sc.get(0)) + (int) Math.floor((c.get(sc.get(i)) + c.get(sc.get(0)) - c.get(sc.get(i - 1))) / 2.0);
-                a.put(sc.get(i), aValue);
-                b.put(sc.get(i), bValue);
+                aValue = (int) Math.ceil((c.get(i).getSize() + c.get(0).getSize() - c.get(i - 1).getSize()) / 2.0);
+                bValue = c.get(i - 1).getSize() - c.get(0).getSize() + (int) Math.floor((c.get(i).getSize() + c.get(0).getSize() - c.get(i - 1).getSize()) / 2.0);
+                a.add(new NumColor(c.get(i).getColor(), aValue));
+                b.add(new NumColor(c.get(i).getColor(), bValue));
                 Sa += aValue;
                 Sb += bValue;
                 i++;
                 while (i < h) {
                     if (Sa < Sb) {
-                        aValue = (int) Math.ceil(c.get(sc.get(i)) / 2.0);
-                        bValue = (int) Math.floor(c.get(sc.get(i)) / 2.0);
+                        aValue = (int) Math.ceil(c.get(i).getSize() / 2.0);
+                        bValue = (int) Math.floor(c.get(i).getSize() / 2.0);
                     } else {
-                        aValue = (int) Math.floor(c.get(sc.get(i)) / 2.0);
-                        bValue = (int) Math.ceil(c.get(sc.get(i)) / 2.0);
+                        aValue = (int) Math.floor(c.get(i).getSize() / 2.0);
+                        bValue = (int) Math.ceil(c.get(i).getSize() / 2.0);
                     }
-                    a.put(sc.get(i), aValue);
-                    b.put(sc.get(i), bValue);
+                    a.add(new NumColor(c.get(i).getColor(), aValue));
+                    b.add(new NumColor(c.get(i).getColor(), bValue));
 
                     Sa += aValue;
                     Sb += bValue;
                     i++;
                 }
             }
-            C.put(intSorted(a), intSorted(b));
-            a.clear();
-            b.clear();
+            Collections.sort(a);
+            Collections.sort(b);
+            C.put(a, b);
 
             return C;
         } else {
@@ -334,8 +347,9 @@ class ColorSplittingAlgorithm {
     }
 
     //Corollary 2.12 (Balanced Color Configuration) return 𝑐 = [𝑐1, 𝑐2, . . . , 𝑐ℎ]
-    public HashMap<String, Integer> balancedColorConfiguration(int h) {
-        HashMap<String, Integer> c = new HashMap<>(h);
+    public List<NumColor> balancedColorConfiguration(int h) {
+        List<NumColor> c = new ArrayList<>(h);
+
         int u = (int) (Math.pow(2, h + 1) - 2) % h;
         int cValue;
 
@@ -343,10 +357,10 @@ class ColorSplittingAlgorithm {
             double a = (Math.pow(2, h + 1) - 2) / h;
             if (i < (h - u)) {
                 cValue = (int) Math.floor(a);
-                c.put("C" + (i + 1), cValue);
+                c.add(new NumColor(color[i], cValue));
             } else {
                 cValue = (int) Math.ceil(a);
-                c.put("C" + (i + 1), cValue);
+                c.add(new NumColor(color[i], cValue));
             }
         }
         return c;
@@ -355,7 +369,7 @@ class ColorSplittingAlgorithm {
     //Definition 2.3 (Feasible Color Configuration). A color configuration 𝑐fi of dimension ℎ is called
     //"ℎ-feasible" if after being sorted in a non-decreasing order (so that 𝑐1 ≤ 𝑐2 ≤ · · · ≤ 𝑐ℎ), it satisfies
     //the following two conditions: (C1) and (C2)
-    public boolean isFeasible(int h, HashMap<String, Integer> c) {
+    public boolean isFeasible(int h, List<NumColor> c) {
         for (int m = h; m > 0; m--) {
             int sum;
             sum = getTotalColorSize(m, c);
@@ -378,12 +392,11 @@ class ColorSplittingAlgorithm {
     }
 
     //Sum all color values
-    public int getTotalColorSize(int m, HashMap<String, Integer> c) {
+    public int getTotalColorSize(int m, List<NumColor> c) {
         if (0 < m && m <= c.size()) {
             int sum = 0;
-            ArrayList<Integer> sc = new ArrayList<>(c.values());
             for (int i = 0; i < m; i++) {
-                sum += sc.get(i);
+                sum += c.get(i).getSize();
             }
             return sum;
         } else {
@@ -391,17 +404,7 @@ class ColorSplittingAlgorithm {
             return 0;
         }
     }
-
-    //Sorts 𝑐𝑖 in a non-decreasing order
-    public HashMap<String, Integer> intSorted(HashMap<String, Integer> m) {
-        sorted = m.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue())
-                .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue, (e1, e2) -> e1, LinkedHashMap :: new));
-        return sorted;
-    }
 }
-
 
 /* An example of a perfect binary tree with h = 2
                        1
@@ -410,25 +413,56 @@ class ColorSplittingAlgorithm {
                 /  \    /  \
                4   5   6    7
 */
-class PerfectBinaryTree {
-    private final int height;
-    //each node will contain key = R; value = color
-    private final HashMap<Long, String> coloringNodes;
+//Each set will contain all node with the same color
+class BalancedSet {
+    private final char colorSet;
+    //each node will contain R and color
+    private final int [] addNodes;
+    private int count = 0;
 
-    public PerfectBinaryTree(int height) {
-        this.height = height;
-        coloringNodes = new HashMap<>((int) (Math.pow(2, (height + 1)) - 2));
+    public BalancedSet(char colorSet, int size) {
+        this.colorSet = colorSet;
+        addNodes = new int [size];
     }
 
-    public void setColorNode(long root, String value) {
-        coloringNodes.put(root, value);
+    public void addNode(int root) {
+        //array start from 0, whereas node colored start from 2
+        addNodes[count] = root;
+        count++;
     }
 
-    public HashMap<Long, String> getcoloringNodes() {
-        return coloringNodes;
+    public int [] getAddNodes() {
+        return addNodes;
     }
 
-    public int getHeight() {
-        return height;
+    public char getColorSet() {
+        return colorSet;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder roots = new StringBuilder();
+        for (int addNode : addNodes) {
+            roots.append(addNode).append(" ");
+        }
+        return "Color " + this.colorSet + ": " + roots;
+    }
+}
+
+class NumColor implements Comparable<NumColor> {
+    private final char color;
+    private final int size;
+
+    public NumColor(char color, int size){
+        this.color = color;
+        this.size = size;
+    }
+
+    public char getColor(){ return color;}
+    public int getSize(){ return size;}
+
+    @Override
+    public int compareTo(NumColor otherNumColor) {
+        return Integer.compare(getSize(), otherNumColor.getSize());
     }
 }
