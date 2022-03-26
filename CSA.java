@@ -155,6 +155,7 @@ public class CSA {
                 testCSA(CHECK, test, balancedSets, h);
 
                 c.clear();
+                vectorC.clear();
             }
         }
     }
