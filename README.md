@@ -33,7 +33,7 @@ T(32) = 978274 milliseconds (Recommended heap size 64GB)
 T(33) = 1994432 milliseconds (Recommended heap size 120GB)
 
 ## Compiling CSA
-Once Java and Javac is installed, to build CSA simply run:
+Once Java and Javac are installed, to build CSA simply run:
 
     javac CSA.java
     java CSA
